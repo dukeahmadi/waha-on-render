@@ -1,0 +1,11 @@
+{
+  "name": "waha-on-render",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@open-wa/wa-automate": "^5.0.0"
+  }
+}
