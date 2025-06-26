@@ -7,19 +7,27 @@ create({
   qrTimeout: 0,
   authTimeout: 60,
   cacheEnabled: false,
-  useChrome: true,
+  useChrome: false,   // خیلی مهم: روی false باشه
   killProcessOnBrowserClose: true,
   disableSpins: true,
   throwErrorOnTosBlock: false,
   logConsole: false,
   popup: false,
-  chromiumArgs: ['--no-sandbox', '--disable-setuid-sandbox'],
-  executablePath: '/usr/bin/google-chrome', // 🟢 کروم داخلی لینوکس
+  chromiumArgs: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--single-process',
+    '--disable-gpu'
+  ],
+
   server: true,
   apiHost: '0.0.0.0',
-  apiPort: process.env.PORT || 8000
-}).then(client => {
+  apiPort: process.env.PORT || 8000,
+})
+.then(client => {
   console.log('✅ Waha is ready!');
-}).catch(e => {
+})
+.catch(e => {
   console.error('❌ Waha failed to start', e);
 });
