@@ -2,9 +2,8 @@ const { create } = require('@open-wa/wa-automate');
 const puppeteer = require('puppeteer');
 
 (async () => {
-  const browserFetcher = puppeteer.createBrowserFetcher();
-  const revisionInfo = await browserFetcher.download('1221111'); // نسخه پایدار
-  const executablePath = revisionInfo.executablePath;
+  const browser = await puppeteer.launch();
+  const executablePath = browser.executablePath();
 
   create({
     sessionId: "waha-render",
@@ -19,7 +18,7 @@ const puppeteer = require('puppeteer');
     throwErrorOnTosBlock: false,
     logConsole: false,
     popup: false,
-    executablePath,  // مسیر کروم دانلود شده
+    executablePath,
     chromiumArgs: ['--no-sandbox', '--disable-setuid-sandbox'],
     server: true,
     apiHost: '0.0.0.0',
