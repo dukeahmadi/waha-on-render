@@ -50,17 +50,16 @@ WORKDIR /app
 COPY package*.json ./
 
 # نصب وابستگی‌های Node.js
+# این مرحله Puppeteer را مجبور می‌کند Chromium را دانلود کند.
 RUN npm install
 
-# این خطوط مربوط به پیدا کردن مسیر Chromium را حذف کنید
-# # RUN CHROMIUM_PATH=$(find /root/.cache/puppeteer -name chrome | head -n 1) \
-# #    && echo "Chromium path: $CHROMIUM_PATH" \
-# #    && test -f "$CHROMIUM_PATH" # بررسی کند که فایل اجرایی وجود دارد
+# --- شروع تغییرات موقتی برای پیدا کردن مسیر ---
+# این دستور بعد از npm install اجرا میشه و مسیر دانلود شده Chromium رو چاپ می‌کنه.
+# این خط رو بعد از پیدا کردن مسیر حذف خواهیم کرد.
+RUN node -e 'require("puppeteer-core").executablePath().then(console.log)'
+# --- پایان تغییرات موقتی ---
 
-# متغیر محیطی CHROME_PATH را مستقیماً تنظیم کنید.
-# Puppeteer Chromium را در این مسیر دانلود می‌کند: /root/.cache/puppeteer/chrome/linux-<version>/chrome-linux64/chrome
-# ما از یک wildcard (*) برای پوشه نسخه استفاده می‌کنیم.
-ENV CHROME_PATH="/root/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome"
+# ENV CHROME_PATH="/root/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome" # فعلاً این خط رو حذف کنید
 
 # کپی کردن بقیه فایل‌های پروژه
 COPY . .
