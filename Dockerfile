@@ -2,7 +2,6 @@
 FROM node:18-slim
 
 # نصب وابستگی‌های لازم برای Chromium
-# این لیست ممکن است بسته به ایمیج پایه Node.js و نیازهای Chromium کمی متفاوت باشد.
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     fonts-liberation \
@@ -51,22 +50,17 @@ WORKDIR /app
 COPY package*.json ./
 
 # نصب وابستگی‌های Node.js
-# این مرحله باعث می‌شود puppeteer-core Chromium را دانلود کند.
-# اگر قبلا PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true را تنظیم کرده بودید، آن را حذف کنید.
 RUN npm install
 
-# پیدا کردن مسیر Chromium دانلود شده توسط Puppeteer و تنظیم آن به عنوان CHROME_PATH
-# این دستور سعی می‌کند مسیر Chromium را پیدا کرده و متغیر محیطی CHROME_PATH را تنظیم کند.
-# مسیر دقیق ممکن است بسته به نسخه Puppeteer متفاوت باشد.
-# اگر این خط کار نکرد، باید مسیر دقیق را از لاگ‌های بیلد قبلی پیدا کنید.
-RUN CHROMIUM_PATH=$(find /root/.cache/puppeteer -name chrome | head -n 1) \
-    && echo "Chromium path: $CHROMIUM_PATH" \
-    && test -f "$CHROMIUM_PATH" # بررسی کند که فایل اجرایی وجود دارد
-ENV CHROME_PATH="/root/.cache/puppeteer/chrome/linux-*/chrome-linux*/chrome"
-# این مسیر تقریبی است. اگر بیلد باز هم ارور داد،
-# در مرحله npm install یک بار بدون ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-# بیلد را اجرا کنید تا ببینید کرومیوم دقیقاً کجا دانلود می‌شود.
-# سپس مسیر صحیح را اینجا قرار دهید.
+# این خطوط مربوط به پیدا کردن مسیر Chromium را حذف کنید
+# # RUN CHROMIUM_PATH=$(find /root/.cache/puppeteer -name chrome | head -n 1) \
+# #    && echo "Chromium path: $CHROMIUM_PATH" \
+# #    && test -f "$CHROMIUM_PATH" # بررسی کند که فایل اجرایی وجود دارد
+
+# متغیر محیطی CHROME_PATH را مستقیماً تنظیم کنید.
+# Puppeteer Chromium را در این مسیر دانلود می‌کند: /root/.cache/puppeteer/chrome/linux-<version>/chrome-linux64/chrome
+# ما از یک wildcard (*) برای پوشه نسخه استفاده می‌کنیم.
+ENV CHROME_PATH="/root/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome"
 
 # کپی کردن بقیه فایل‌های پروژه
 COPY . .
