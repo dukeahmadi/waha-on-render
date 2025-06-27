@@ -40,6 +40,10 @@ RUN apt-get update && apt-get install -y \
     lsb-release \
     wget \
     xdg-utils \
+    # اضافه کردن Chromium به لیست نصب
+    chromium \
+    # یا اگر chromium-browser در مخازن شما نیست:
+    # google-chrome-stable \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
@@ -49,21 +53,15 @@ WORKDIR /app
 # کپی کردن فایل‌های package.json و package-lock.json
 COPY package*.json ./
 
-# **مهم:** مطمئن شوید که PUPPETEER_SKIP_DOWNLOAD=false است (یا اصلاً تنظیم نشده باشد)
-# این متغیر محیطی تضمین می‌کند که Chromium دانلود می‌شود.
-ENV PUPPETEER_SKIP_DOWNLOAD=false
-# اگر از PUPPETEER_CACHE_DIR استفاده کرده بودید، می‌توانید آن را هم حفظ کنید یا حذف کنید.
-# ENV PUPPETEER_CACHE_DIR=/usr/local/share/.cache/puppeteer
-
-# نصب وابستگی‌های Node.js (که postinstall را اجرا می‌کند)
+# نصب وابستگی‌های Node.js
 RUN npm install
 
-# CHROME_PATH را به یک مسیر پیش‌فرض که Puppeteer معمولاً دانلود می‌کند، تنظیم کنید.
-# ما انتظار داریم اسکریپت postinstall مسیر دقیق را به ما بدهد.
-# اگر Render در مسیر /usr/local/share/.cache/puppeteer دانلود کند، مسیر این خواهد بود:
-ENV CHROME_PATH="/usr/local/share/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome"
-# اگر در مسیر /root/.cache/puppeteer دانلود کند:
-# ENV CHROME_PATH="/root/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome"
+# CHROME_PATH را به مسیر پیش‌فرض Chromium در Debian/Ubuntu تنظیم کنید.
+# اگر از 'chromium' در بالا استفاده کردید:
+ENV CHROME_PATH="/usr/bin/chromium"
+# اگر از 'google-chrome-stable' استفاده کردید:
+# ENV CHROME_PATH="/usr/bin/google-chrome"
+
 
 # کپی کردن بقیه فایل‌های پروژه
 COPY . .
