@@ -49,17 +49,19 @@ WORKDIR /app
 # کپی کردن فایل‌های package.json و package-lock.json
 COPY package*.json ./
 
+# **اینجا تغییرات اصلی:**
+# تنظیم مسیر کش Puppeteer به /usr/local/share/.cache/puppeteer
+ENV PUPPETEER_CACHE_DIR=/usr/local/share/.cache/puppeteer
+# اطمینان حاصل کنید که Puppeteer Chromium را دانلود می‌کند (پیش‌فرض false است)
+ENV PUPPETEER_SKIP_DOWNLOAD=false
+
 # نصب وابستگی‌های Node.js
-# این مرحله Puppeteer را مجبور می‌کند Chromium را دانلود کند.
+# Puppeteer در حین npm install به صورت خودکار Chromium را در PUPPETEER_CACHE_DIR دانلود خواهد کرد.
 RUN npm install
 
-# --- شروع تغییرات موقتی برای پیدا کردن مسیر ---
-# این دستور بعد از npm install اجرا میشه و مسیر دانلود شده Chromium رو چاپ می‌کنه.
-# این خط رو بعد از پیدا کردن مسیر حذف خواهیم کرد.
-RUN node -e 'require("puppeteer-core").executablePath().then(console.log)'
-# --- پایان تغییرات موقتی ---
-
-# ENV CHROME_PATH="/root/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome" # فعلاً این خط رو حذف کنید
+# تعیین مسیر دقیق فایل اجرایی Chromium بر اساس PUPPETEER_CACHE_DIR و ساختار دانلود Puppeteer
+# این مسیر باید کاملاً دقیق باشد
+ENV CHROME_PATH="/usr/local/share/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome"
 
 # کپی کردن بقیه فایل‌های پروژه
 COPY . .
