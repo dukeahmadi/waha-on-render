@@ -5,7 +5,6 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
-    // "postinstall": "node -e 'require(\"puppeteer-core\").executablePath().then(console.log).catch(err => console.error(\"Error getting executable path:\", err))'" // این خط را حذف کنید
   },
   "keywords": [],
   "author": "",
@@ -13,6 +12,6 @@
   "dependencies": {
     "@open-wa/wa-automate": "^4.76.0",
     "express": "^4.19.2",
-    "puppeteer-core": "^22.10.0" // این را می توانید نگه دارید یا حذف کنید، اما مشکلی ایجاد نمی کند
+    "puppeteer-core": "^22.10.0"
   }
 }
