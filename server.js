@@ -3,45 +3,42 @@ const express = require('express');
 const app = express();
 
 const PORT = process.env.PORT || 8000;
-let qrCodeData = null;
+let qrCodeData = null; // متغیر برای نگهداری داده QR کد
+
+let waClient = null; // متغیری برای نگهداری آبجکت client
 
 wa.create({
-  // **NEW: Add useChrome: true as recommended by open-wa**
-  useChrome: true, 
-  
-  // Keep essential chromiumArgs for Docker.
-  // We're removing `--single-process` as it can sometimes cause issues.
-  // And also other less critical args based on open-wa's warning.
+  useChrome: true,
   chromiumArgs: [
     '--no-sandbox',
     '--disable-setuid-sandbox',
-    // You can keep --disable-gpu if you want, but often not strictly needed in headless
-    // '--disable-gpu', 
-    '--disable-dev-shm-usage', // Essential for Docker
-    // '--single-process', // <-- Remove this line
-    // '--disable-extensions', // <-- Remove this line
-    // '--disable-accelerated-2d-canvas', // <-- Remove this line
-    // '--no-first-run', // <-- Remove this line
-    // '--no-zygote', // <-- Remove this line
-    // '--disable-gl-drawing-for-tests' // <-- Remove this line
+    '--disable-dev-shm-usage',
   ],
-  
-  // Ensure executablePath points to where Chromium is installed in your Dockerfile
-  // Based on your Dockerfile, '/usr/bin/chromium' is the correct path.
-  executablePath: '/usr/bin/chromium', 
-
-  qrTimeout: 0, 
-  multiDevice: true 
+  executablePath: '/usr/bin/chromium',
+  qrTimeout: 0,
+  multiDevice: true
 })
-.then(client => start(client))
+.then(client => {
+  waClient = client; // آبجکت client را در متغیر سراسری ذخیره کن
+  start(client);
+  // شروع به تلاش برای گرفتن QR کد بلافاصله پس از راه‌اندازی client
+  // کمی تاخیر اولیه برای اطمینان از آماده بودن WhatsApp
+  setTimeout(checkAndSetQrCode, 5000); // 5 ثانیه صبر کن، بعد شروع به چک کردن QR کن
+})
 .catch(err => console.error("WA Automate Error:", err));
+
 
 function start(client) {
   console.log('WA Automate Client Started');
 
   client.onStateChanged((state) => {
     console.log('State changed:', state);
-    if (state === 'CONFLICT' || state === 'UNLAUNCHED') client.forceRefocus();
+    // اگر به هر دلیلی وضعیت تغییر کرد و QR کد نیاز شد، دوباره چک کن
+    if (state === 'CONFLICT' || state === 'UNLAUNCHED' || state === 'QR_CODE_NOT_FOUND') {
+      client.forceRefocus();
+      // اگر QR کد جدیدی نیاز بود، دوباره شروع به چک کردن کن
+      setTimeout(checkAndSetQrCode, 2000); 
+    }
   });
 
   client.onMessage(async message => {
@@ -51,30 +48,61 @@ function start(client) {
     }
   });
 
-  // This is the correct way to get the QR code from open-wa
-  client.onqr((qrCode) => {
-    console.log('QR Code received!'); // This is the log we're looking for!
-    qrCodeData = qrCode; // Store the QR code
-  });
+  // **این خط را حذف یا کامنت کنید، دیگر به آن نیاز نداریم:**
+  // client.onqr((qrCode) => {
+  //   console.log('QR Code received!');
+  //   qrCodeData = qrCode;
+  //   console.log('QR code data stored successfully.');
+  // });
 
   client.onAddedToGroup((chat) => {
     console.log('Added to group:', chat.contact.name);
   });
 }
 
+// **تابع جدید برای چک کردن و تنظیم QR کد به صورت دوره‌ای**
+async function checkAndSetQrCode() {
+  if (waClient && !qrCodeData) { // فقط اگر client آماده بود و QR کد هنوز گرفته نشده بود
+    try {
+      const qr = await waClient.getQR(); // تلاش برای گرفتن QR کد
+      if (qr && qr !== 'data:image/png;base64,') { // مطمئن شو که QR خالی نیست
+        qrCodeData = qr;
+        console.log('QR Code successfully fetched and stored!');
+      } else {
+        console.log('QR Code is not ready yet, retrying...');
+        setTimeout(checkAndSetQrCode, 5000); // 5 ثانیه صبر کن و دوباره تلاش کن
+      }
+    } catch (error) {
+      console.error('Error fetching QR code:', error.message);
+      // اگر خطایی رخ داد، دوباره تلاش کن
+      setTimeout(checkAndSetQrCode, 5000);
+    }
+  } else if (!waClient) {
+      console.log('Waiting for WA client to initialize...');
+      setTimeout(checkAndSetQrCode, 5000);
+  } else if (qrCodeData) {
+      console.log('QR Code already available.');
+  }
+}
+
+
 app.get('/qr', (req, res) => {
   if (qrCodeData) {
+    // اگر داده QR کد موجود باشد، آن را به عنوان تصویر Base64 نمایش بده
     const img = Buffer.from(qrCodeData.replace(/^data:image\/(png|jpeg|jpg);base64,/, ''), 'base64');
+
     res.writeHead(200, {
       'Content-Type': 'image/png',
       'Content-Length': img.length
     });
     res.end(img);
   } else {
+    // اگر QR کد هنوز موجود نیست، درخواست دهنده را به سمت رفرش هدایت کن
     res.send('QR Code not available yet. Please refresh in a few moments.');
   }
 });
 
+// مسیر اصلی سرور
 app.get('/', (req, res) => {
   res.send(`
     <h1>WAHA Bot Running</h1>
@@ -83,6 +111,7 @@ app.get('/', (req, res) => {
   `);
 });
 
+// سرور Express را روی پورت تعیین شده (یا Render) گوش بده
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Access the QR code at: http://localhost:${PORT}/qr (replace localhost with your Render URL)`);
