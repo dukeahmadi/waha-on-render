@@ -3,28 +3,30 @@ const express = require('express');
 const app = express();
 
 // تنظیم پورت از متغیر محیطی Render یا پیش‌فرض 10000
+// Render به طور خودکار پورت رو به صورت یک متغیر محیطی (PORT) تنظیم می‌کنه.
 const PORT = process.env.PORT || 10000;
 
-let qrCodeData = null; // برای ذخیره داده QR کد
-let waClient = null;   // برای نگهداری شیء client واتساپ
+let qrCodeData = null; // برای ذخیره داده QR کد به صورت Base64
+let waClient = null;   // برای نگهداری شیء client واتساپ (بازارسال شده از open-wa)
 
 // تنظیم و راه‌اندازی open-wa
 wa.create({
   // استفاده از مرورگر Chrome که در Dockerfile شما نصب می‌شود
   useChrome: true,
   
-  // آرگومان‌های ضروری برای Puppeteer/Chromium در محیط headless مانند Render
+  // آرگومان‌های ضروری برای Puppeteer/Chromium در محیط‌های Headless (مثل Render)
   chromiumArgs: [
     '--no-sandbox',           // حیاتی برای اجرا در محیط‌های کانتینری
     '--disable-setuid-sandbox', // حیاتی برای اجرا در محیط‌های کانتینری
     '--disable-dev-shm-usage',  // مهم برای مدیریت حافظه در Render
   ],
   
-  // مسیر اجرایی Chromium در سیستم فایل Docker
+  // مسیر اجرایی Chromium در سیستم فایل Docker (همونطور که در Dockerfile نصب شده)
   executablePath: '/usr/bin/chromium',
 
-  qrTimeout: 0, // ما خودمان مدیریت QR کد را انجام می‌دهیم، پس timeout را غیرفعال می‌کنیم
-  multiDevice: true // فعال‌سازی پشتیبانی از Multi Device واتساپ
+  qrTimeout: 0, // ما خودمون مدیریت QR کد رو انجام می‌دیم، پس Timeout رو غیرفعال می‌کنیم
+  multiDevice: true, // فعال‌سازی پشتیبانی از Multi Device واتساپ
+  sessionId: 'session' // نام سشن برای ذخیره اطلاعات لاگین
 })
 .then(client => {
   waClient = client; // ذخیره شیء client واتساپ برای دسترسی‌های بعدی
@@ -45,27 +47,27 @@ function start(client) {
     console.log('State changed:', state);
     // اگر وضعیت به گونه‌ای بود که نیاز به QR کد جدید باشد، دوباره چک می‌کنیم
     if (state === 'CONFLICT' || state === 'UNLAUNCHED' || state === 'QR_CODE_NOT_FOUND') {
+      console.log(`State requires re-authentication or QR scan: ${state}. Attempting to fetch QR again...`);
       client.forceRefocus(); // مرورگر واتساپ را رفرش می‌کند
       // کمی تأخیر قبل از تلاش مجدد برای QR کد
       setTimeout(checkAndSetQrCode, 2000); 
+    } else if (state === 'CONNECTED') {
+      console.log('WhatsApp client is now connected!');
+      qrCodeData = null; // وقتی وصل شدیم، QR کد رو پاک می‌کنیم
     }
   });
 
   // مثال: پاسخ به پیام 'hi'
   client.onMessage(async message => {
     console.log("New message:", message.body);
-    if (message.body === 'hi') {
-      await client.sendText(message.from, 'Hello from your bot!');
+    if (message.body && message.body.toLowerCase() === 'hi') {
+      await client.sendText(message.from, 'Hello from your bot! How can I help you today?');
     }
   });
 
-  // **توجه:** تابع client.onqr حذف شده است.
-  // به دلیل مشکلات گزارش شده در فراخوانی این رویداد در محیط Render،
-  // از روش Polling (تابع checkAndSetQrCode) برای دریافت QR کد استفاده می‌کنیم.
-
   // رصد اضافه شدن به گروه
   client.onAddedToGroup((chat) => {
-    console.log('Added to group:', chat.contact.name);
+    console.log(`Added to group: ${chat.contact.name} (${chat.id})`);
   });
 }
 
@@ -111,7 +113,7 @@ app.get('/qr', (req, res) => {
     res.end(img);
   } else {
     // اگر QR کد هنوز آماده نباشد
-    res.send('QR Code not available yet. Please refresh in a few moments.');
+    res.send('QR Code not available yet. Please refresh in a few moments or check logs for status.');
   }
 });
 
@@ -121,6 +123,7 @@ app.get('/', (req, res) => {
     <h1>WAHA Bot Running</h1>
     <p>Visit <a href="/qr">/qr</a> to see the QR code if needed.</p>
     <p>Make sure you have linked your WhatsApp account.</p>
+    <p>Check Render logs for detailed status.</p>
   `);
 });
 
