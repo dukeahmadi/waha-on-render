@@ -15,7 +15,21 @@ wa.create({
   executablePath: '/usr/bin/chromium',
   qrTimeout: 0,
   multiDevice: true,
-  sessionId: 'session'
+  sessionId: 'session',
+  // ===>>> این قسمت جدید است: آرگومان‌های بهینه‌سازی Chromium <<<===
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage', // مهم برای محیط‌های Docker/Low-RAM
+    '--disable-accelerated-2d-canvas',
+    '--no-first-run',
+    '--no-zygote',
+    '--single-process', // ممکن است کمک کند
+    '--disable-gpu',
+    '--disable-extensions',
+    '--disable-notifications'
+  ]
+  // ==================================================================
 })
 .then(client => {
   waClient = client;
