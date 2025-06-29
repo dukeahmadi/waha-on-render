@@ -1,5 +1,5 @@
 {
-  "name": "waha-on-render-v2", <--- اینجا رو تغییر بدید
+  "name": "waha-on-render-v2", 
   "version": "1.0.0",
   "description": "WhatsApp Bot using open-wa/wa-automate on Render",
   "main": "server.js",
