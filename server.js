@@ -7,36 +7,30 @@ const PORT = process.env.PORT || 10000;
 let qrCodeData = null;
 let waClient = null;
 
+console.log('App starting...'); // لاگ 1: شروع برنامه
+
 // تنظیم و راه‌اندازی open-wa
 wa.create({
   useChrome: true,
-  // *** تغییر مهم: حذف chromiumArgs ***
-  // این آرگومان‌ها در حالت Multi-Device ممکن است مشکل‌ساز باشند.
-  // open-wa معمولاً خودش تنظیمات لازم برای محیط headless را انجام می‌دهد.
-  // chromiumArgs: [
-  //   '--no-sandbox',
-  //   '--disable-setuid-sandbox',
-  //   '--disable-dev-shm-usage',
-  // ],
-  executablePath: '/usr/bin/chromium', // این خط باید باشد
+  executablePath: '/usr/bin/chromium',
   qrTimeout: 0,
   multiDevice: true,
   sessionId: 'session'
 })
 .then(client => {
   waClient = client;
-  console.log('WA Automate client initialized. Starting main function...');
+  console.log('WA Automate client initialized. Calling start(client)...'); // لاگ 2: client open-wa مقداردهی شد
   start(client);
 
-  console.log('Scheduling initial QR code check in 5 seconds...');
+  console.log('Scheduling initial QR code check in 5 seconds...'); // لاگ 3: برنامه‌ریزی اولین چک QR
   setTimeout(checkAndSetQrCode, 5000); 
 })
 .catch(err => {
-  console.error("WA Automate Error during create:", err);
+  console.error("WA Automate Error during create:", err); // لاگ خطا: اگر در create مشکلی بود
 });
 
 function start(client) {
-  console.log('WA Automate Client Started and listening for events.');
+  console.log('WA Automate Client Started and listening for events.'); // لاگ 4: تابع start اجرا شد
 
   client.onStateChanged((state) => {
     console.log('State changed:', state);
@@ -72,6 +66,8 @@ function start(client) {
 }
 
 async function checkAndSetQrCode() {
+  console.log('checkAndSetQrCode: Function called.'); // لاگ 5: تابع Polling اجرا شد
+
   if (!waClient) {
       console.log('checkAndSetQrCode: Waiting for WA client to initialize...');
       setTimeout(checkAndSetQrCode, 5000);
@@ -128,6 +124,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`); // لاگ 0: شروع سرور Express
   console.log(`Access the QR code at: http://localhost:${PORT}/qr (replace localhost with your Render URL)`);
 });
