@@ -1,73 +1,28 @@
-# از یک ایمیج Node.js شروع کنید
-FROM node:18-slim
+# استفاده از یک ایمیج پایه Node.js
+FROM node:18-buster
 
-# نصب وابستگی‌های لازم برای Chromium
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    fonts-liberation \
-    libappindicator3-1 \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libexpat1 \
-    libfontconfig1 \
-    libgbm1 \
-    libgdk-pixbuf2.0-0 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
-    libxtst6 \
-    lsb-release \
-    wget \
-    xdg-utils \
-    # اضافه کردن Chromium به لیست نصب
-    chromium \
-    # یا اگر chromium-browser در مخازن شما نیست:
-    # google-chrome-stable \
-    --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
+# ساخت دایرکتوری کار در کانتینر
+WORKDIR /usr/src/app
 
-# تنظیم دایرکتوری کاری
-WORKDIR /app
-
-# کپی کردن فایل‌های package.json و package-lock.json
+# کپی کردن package.json و package-lock.json برای نصب وابستگی‌ها
+# این کار بهینه‌تره چون اگر وابستگی‌ها تغییر نکنن، لایه‌ی داکر از کش استفاده می‌کنه
 COPY package*.json ./
 
 # نصب وابستگی‌های Node.js
 RUN npm install
 
-# CHROME_PATH را به مسیر پیش‌فرض Chromium در Debian/Ubuntu تنظیم کنید.
-# اگر از 'chromium' در بالا استفاده کردید:
-ENV CHROME_PATH="/usr/bin/chromium"
-# اگر از 'google-chrome-stable' استفاده کردید:
-# ENV CHROME_PATH="/usr/bin/google-chrome"
-
+# نصب Chromium و ابزارهای لازم
+# این مرحله برای open-wa ضروریه تا بتونه مرورگر رو اجرا کنه
+RUN apt-get update && apt-get install -y \
+    chromium \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
 # کپی کردن بقیه فایل‌های پروژه
 COPY . .
 
-# پورت مورد نیاز اپلیکیشن Waha را اکسپوز کنید
-EXPOSE 8000
+# پورتی که اپلیکیشن Node.js شما روی اون گوش میده
+EXPOSE 10000
 
 # دستور شروع اپلیکیشن
-CMD ["npm", "start"]
+CMD [ "npm", "start" ]
