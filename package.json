@@ -1,17 +1,22 @@
 {
   "name": "waha-on-render",
   "version": "1.0.0",
-  "description": "",
+  "description": "WhatsApp Bot using open-wa/wa-automate on Render",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "open-wa",
+    "wa-automate",
+    "render"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
     "@open-wa/wa-automate": "^4.76.0",
-    "express": "^4.19.2",
-    "puppeteer-core": "^22.10.0"
+    "express": "^4.19.2"
   }
 }
